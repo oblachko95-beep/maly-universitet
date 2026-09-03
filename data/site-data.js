@@ -40,7 +40,7 @@ window.SITE_DATA = {
         "format": "очно",
         "load": "27 пар по 1,5 часа",
         "dates": "5.10.2026 - 31.05.2027",
-        "price": "27 пар по 1,5 часа",
+        "price": "12300",
         "detailsUrl": "https://malun.kpfu.ru/sites/default/files/%D0%BC%D0%B0%D1%82%D0%B5%D0%BC%D0%B0%D1%82%D0%B8%D0%BA%D0%B0_5.pdf",
         "enrollUrl": "https://shelly.kpfu.ru/e-ksu/portal_dpo.registration?p_project=5&p_course=111749"
       },
