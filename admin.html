@@ -28,29 +28,69 @@
   .admin-actions { position: sticky; bottom: 0; background: var(--navy); padding: 18px 0; margin-top: 34px; }
   .admin-actions .container { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
   .admin-actions p { color: #AFC1DA; font-size: 14px; margin: 0; flex: 1 1 100%; }
-  #admin-out { width: 100%; min-height: 140px; font-family: monospace; font-size: 13px; padding: 12px; border-radius: 8px; border: 1px solid var(--line); }
   .admin-toast { position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%); background: #1B6E3C; color: #fff; padding: 12px 22px; border-radius: 999px; font-weight: 700; display: none; z-index: 400; }
+  .admin-toast--error { background: #B00020; }
+  .login-card { max-width: 420px; margin: 60px auto 80px; border: 1px solid var(--line); border-radius: 14px; padding: 34px 32px; }
+  .login-card h1 { font-size: 1.5rem; margin-bottom: 8px; }
+  .login-card .field { margin-bottom: 16px; }
+  .login-card label { display: block; font-weight: 700; font-size: 14.5px; color: var(--navy); margin-bottom: 6px; }
+  .login-card input { font: inherit; font-size: 15px; padding: 11px 14px; border: 1px solid #B9C4D2; border-radius: 8px; width: 100%; }
+  .login-error { color: #B00020; font-size: 14px; margin-top: 10px; display: none; }
+  .publish-status { font-size: 14.5px; margin-top: 12px; }
+  .token-row { display: grid; gap: 10px; }
+  @media (min-width: 800px) { .token-row { grid-template-columns: 1fr auto auto; align-items: end; } }
 </style>
 </head>
 <body>
 
 <main id="main">
+
+<!-- Экран входа -->
+<div id="login-screen">
+  <div class="container container--offset">
+    <div class="login-card">
+      <h1>Вход в панель администратора</h1>
+      <p style="color:var(--muted);font-size:14.5px;margin-bottom:20px">Доступ только для администратора сайта.</p>
+      <form id="login-form">
+        <div class="field">
+          <label for="login-user">Логин</label>
+          <input type="text" id="login-user" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="login-pass">Пароль</label>
+          <input type="password" id="login-pass" autocomplete="current-password" required>
+        </div>
+        <button class="btn btn--amber" type="submit" style="width:100%">Войти</button>
+        <p class="login-error" id="login-error">Неверный логин или пароль.</p>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Панель (скрыта до входа) -->
+<div id="panel" hidden>
 <section class="page-head">
   <div class="container container--offset">
     <h1>Панель администратора</h1>
-    <p>Заполните поля формами — без редактирования кода. Затем нажмите «Скачать файл» внизу страницы и загрузите полученный файл на GitHub.</p>
+    <p>Заполните поля формами — без редактирования кода. Затем нажмите «Опубликовать на сайте» внизу страницы — изменения появятся на сайте через 1–2 минуты.</p>
   </div>
 </section>
 
 <section class="section">
   <div class="container container--offset">
 
-    <div class="note note--amber" style="margin-bottom:28px">
-      <strong>Как сохранить изменения на сайте:</strong>
-      1) заполните формы ниже → 2) нажмите «Скачать файл site-data.js» →
-      3) на GitHub откройте репозиторий → кнопка <b>Add file → Upload files</b> →
-      перетащите скачанный файл (он заменит старый) → <b>Commit changes</b>.
-      Через 1–2 минуты изменения появятся на сайте.
+    <div class="admin-section" style="background:var(--wash-blue);border-color:#B9C4D2">
+      <h2>Ключ публикации (GitHub token)</h2>
+      <p>Нужен один раз: с ним кнопка «Опубликовать» сразу обновляет сайт. Токен хранится только в вашем браузере и никуда не отправляется, кроме GitHub. Как получить: GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token → доступ только к репозиторию сайта, разрешение <b>Contents: Read and write</b>.</p>
+      <div class="token-row">
+        <div>
+          <label for="gh-token" style="display:block;font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:4px">Токен (ghp_… или github_pat_…)</label>
+          <input id="gh-token" type="password" autocomplete="off" placeholder="Вставьте токен" style="font:inherit;font-size:14.5px;padding:8px 10px;border:1px solid #B9C4D2;border-radius:6px;width:100%;background:#fff">
+        </div>
+        <button class="btn btn--blue btn--small" type="button" id="btn-save-token">Запомнить в этом браузере</button>
+        <button class="btn btn--outline btn--small" type="button" id="btn-clear-token">Удалить токен</button>
+      </div>
+      <p class="publish-status" id="token-status"></p>
     </div>
 
     <div class="admin-section">
@@ -59,7 +99,7 @@
       <div class="admin-row">
         <div class="admin-row__grid">
           <div><label for="enrollUrl">Адрес системы записи (https://…)</label>
-          <input id="enrollUrl" data-bind="enrollUrl" type="text" placeholder="https://"></div>
+          <input id="enrollUrl" type="text" placeholder="https://"></div>
         </div>
       </div>
     </div>
@@ -115,10 +155,12 @@
 
 <div class="admin-actions">
   <div class="container container--offset">
-    <button class="btn btn--amber" type="button" id="btn-download">Скачать файл site-data.js</button>
-    <button class="btn btn--ghost-light" type="button" id="btn-copy">Скопировать содержимое файла</button>
-    <p>Затем на GitHub: репозиторий → Add file → Upload files → перетащите скачанный файл → Commit changes.</p>
+    <button class="btn btn--amber" type="button" id="btn-publish">Опубликовать на сайте</button>
+    <button class="btn btn--ghost-light" type="button" id="btn-download">Скачать файл site-data.js</button>
+    <button class="btn btn--ghost-light" type="button" id="btn-logout">Выйти</button>
+    <p id="publish-status">«Опубликовать» обновляет сайт сразу (нужен токен). «Скачать файл» — запасной вариант: загрузить файл на GitHub вручную.</p>
   </div>
+</div>
 </div>
 </main>
 
@@ -129,6 +171,55 @@
 (function () {
   "use strict";
 
+  /* ================= ВХОД =================
+     Тестовые логин/пароль: admin / maluni2026
+     Чтобы сменить пароль, замените значение PASS_HASH ниже на
+     SHA-256 от строки "логин:пароль" (в комментарии — исходная пара).
+     Это лёгкая защита страницы; реальную защиту от публикации
+     даёт токен GitHub, который хранится только в браузере. */
+  var LOGIN_USER = "admin";
+  var PASS_HASH = "d98ddeb939ca773cf6f178df58962327c62e182e7e6824101c637b1a353de156"; // admin:maluni2026
+  var SESSION_KEY = "mu_admin_session";
+
+  function sha256(text) {
+    var data = new TextEncoder().encode(text);
+    return crypto.subtle.digest("SHA-256", data).then(function (buf) {
+      return Array.prototype.map.call(new Uint8Array(buf), function (b) {
+        return ("0" + b.toString(16)).slice(-2);
+      }).join("");
+    });
+  }
+
+  var loginScreen = document.getElementById("login-screen");
+  var panel = document.getElementById("panel");
+
+  function showPanel() {
+    loginScreen.hidden = true;
+    panel.hidden = false;
+  }
+
+  if (sessionStorage.getItem(SESSION_KEY) === "1") showPanel();
+
+  document.getElementById("login-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var u = document.getElementById("login-user").value.trim();
+    var p = document.getElementById("login-pass").value;
+    sha256(u + ":" + p).then(function (hash) {
+      if (u === LOGIN_USER && hash === PASS_HASH) {
+        sessionStorage.setItem(SESSION_KEY, "1");
+        showPanel();
+      } else {
+        document.getElementById("login-error").style.display = "block";
+      }
+    });
+  });
+
+  document.getElementById("btn-logout").addEventListener("click", function () {
+    sessionStorage.removeItem(SESSION_KEY);
+    location.reload();
+  });
+
+  /* ================= ДАННЫЕ ================= */
   var DATA = window.SITE_DATA || {};
   DATA.topbarLinks = DATA.topbarLinks || [];
   DATA.courses = DATA.courses || {};
@@ -156,8 +247,6 @@
       ["date", "Дата"], ["title", "Заголовок"], ["text", "Текст объявления"], ["url", "Ссылка «Подробнее» (можно пусто)"]
     ]
   };
-
-  function q(v) { return JSON.stringify(v == null ? "" : String(v)); }
 
   function rowEl(schema, item, onDelete) {
     var row = document.createElement("div");
@@ -194,7 +283,7 @@
     return row;
   }
 
-  function renderList(boxId, schema, arr, addLabel) {
+  function renderList(boxId, schema, arr) {
     var box = document.getElementById(boxId);
     box.innerHTML = "";
     if (!arr.length) {
@@ -206,7 +295,7 @@
     arr.forEach(function (item, i) {
       box.appendChild(rowEl(schema, item, function () {
         arr.splice(i, 1);
-        renderList(boxId, schema, arr, addLabel);
+        renderList(boxId, schema, arr);
       }));
     });
   }
@@ -237,7 +326,7 @@
   enrollInput.value = DATA.enrollUrl || "";
   enrollInput.addEventListener("input", function () { DATA.enrollUrl = enrollInput.value; });
 
-  /* ---------- Генерация файла ---------- */
+  /* ---------- Генерация файла данных ---------- */
   function clean(arr, fields) {
     return arr.map(function (it) {
       var o = {};
@@ -245,15 +334,16 @@
       return o;
     });
   }
+  var COURSE_FIELDS = ["name", "grade", "format", "load", "dates", "price", "detailsUrl", "enrollUrl"];
 
   function buildFile() {
     var d = {
       topbarLinks: clean(DATA.topbarLinks, ["title", "url"]),
       enrollUrl: DATA.enrollUrl || "",
       courses: {
-        "5-7": clean(DATA.courses["5-7"], ["name", "grade", "format", "load", "dates", "price", "detailsUrl", "enrollUrl"]),
-        "8-9": clean(DATA.courses["8-9"], ["name", "grade", "format", "load", "dates", "price", "detailsUrl", "enrollUrl"]),
-        "10-11": clean(DATA.courses["10-11"], ["name", "grade", "format", "load", "dates", "price", "detailsUrl", "enrollUrl"])
+        "5-7": clean(DATA.courses["5-7"], COURSE_FIELDS),
+        "8-9": clean(DATA.courses["8-9"], COURSE_FIELDS),
+        "10-11": clean(DATA.courses["10-11"], COURSE_FIELDS)
       },
       events: clean(DATA.events, ["date", "title", "meta", "url"]),
       olympiads: clean(DATA.olympiads, ["title", "text"]),
@@ -268,12 +358,120 @@
     return header + "window.SITE_DATA = " + JSON.stringify(d, null, 2) + ";\n";
   }
 
-  function toast(msg) {
+  function toast(msg, isError) {
     var t = document.getElementById("toast");
-    t.textContent = msg; t.style.display = "block";
-    setTimeout(function () { t.style.display = "none"; }, 2600);
+    t.textContent = msg;
+    t.className = "admin-toast" + (isError ? " admin-toast--error" : "");
+    t.style.display = "block";
+    setTimeout(function () { t.style.display = "none"; }, 3200);
   }
 
+  /* ---------- Токен GitHub ---------- */
+  var TOKEN_KEY = "mu_gh_token";
+  var tokenInput = document.getElementById("gh-token");
+  var tokenStatus = document.getElementById("token-status");
+  try {
+    var saved = localStorage.getItem(TOKEN_KEY);
+    if (saved) {
+      tokenInput.value = saved;
+      tokenStatus.textContent = "Токен сохранён в этом браузере — можно публиковать.";
+      tokenStatus.style.color = "#1B6E3C";
+    }
+  } catch (e) {}
+
+  document.getElementById("btn-save-token").addEventListener("click", function () {
+    if (!tokenInput.value.trim()) { toast("Сначала вставьте токен.", true); return; }
+    try {
+      localStorage.setItem(TOKEN_KEY, tokenInput.value.trim());
+      tokenStatus.textContent = "Токен сохранён в этом браузере — можно публиковать.";
+      tokenStatus.style.color = "#1B6E3C";
+      toast("Токен сохранён в этом браузере.");
+    } catch (e) { toast("Не удалось сохранить токен в браузере.", true); }
+  });
+  document.getElementById("btn-clear-token").addEventListener("click", function () {
+    try { localStorage.removeItem(TOKEN_KEY); } catch (e) {}
+    tokenInput.value = "";
+    tokenStatus.textContent = "Токен удалён.";
+    tokenStatus.style.color = "";
+  });
+
+  /* ---------- Публикация через GitHub API ---------- */
+  function detectRepo() {
+    /* Для сайта вида https://USER.github.io/REPO/ определяем владельца и репозиторий */
+    var host = location.hostname;
+    if (host.endsWith(".github.io")) {
+      var owner = host.replace(".github.io", "");
+      var repo = location.pathname.split("/").filter(Boolean)[0] || (owner + ".github.io");
+      return { owner: owner, repo: repo };
+    }
+    return null;
+  }
+
+  function base64Utf8(str) {
+    return btoa(unescape(encodeURIComponent(str)));
+  }
+
+  document.getElementById("btn-publish").addEventListener("click", function () {
+    var token = tokenInput.value.trim();
+    if (!token) {
+      toast("Нужен токен GitHub: вставьте его в блоке «Ключ публикации» выше.", true);
+      tokenInput.focus();
+      return;
+    }
+    var repo = detectRepo();
+    if (!repo) {
+      toast("Публикация работает на домене github.io. Откройте панель на опубликованном сайте.", true);
+      return;
+    }
+    var status = document.getElementById("publish-status");
+    var btn = document.getElementById("btn-publish");
+    btn.disabled = true;
+    status.textContent = "Публикую…";
+    status.style.color = "#F5A300";
+
+    var api = "https://api.github.com/repos/" + repo.owner + "/" + repo.repo + "/contents/data/site-data.js";
+    var headers = {
+      "Authorization": "Bearer " + token,
+      "Accept": "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28"
+    };
+
+    fetch(api, { headers: headers })
+      .then(function (r) {
+        if (r.status === 404) return { sha: null };
+        if (!r.ok) throw new Error("GitHub вернул ошибку " + r.status + " при чтении файла.");
+        return r.json();
+      })
+      .then(function (info) {
+        return fetch(api, {
+          method: "PUT",
+          headers: headers,
+          body: JSON.stringify({
+            message: "Обновление контента из панели администратора",
+            content: base64Utf8(buildFile()),
+            sha: info.sha || undefined
+          })
+        });
+      })
+      .then(function (r) {
+        if (!r.ok) {
+          return r.json().then(function (body) {
+            throw new Error("GitHub вернул ошибку " + r.status + ": " + (body.message || ""));
+          });
+        }
+        status.textContent = "Опубликовано! Сайт обновится в течение 1–2 минут.";
+        status.style.color = "#7FE0A0";
+        toast("Опубликовано! Сайт обновится через 1–2 минуты.");
+      })
+      .catch(function (err) {
+        status.textContent = "Не удалось опубликовать: " + err.message + " Проверьте токен и права (Contents: Read and write).";
+        status.style.color = "#FF9AA0";
+        toast("Ошибка публикации — см. сообщение внизу страницы.", true);
+      })
+      .finally(function () { btn.disabled = false; });
+  });
+
+  /* ---------- Запасной вариант: скачать файл ---------- */
   document.getElementById("btn-download").addEventListener("click", function () {
     var blob = new Blob([buildFile()], { type: "text/javascript;charset=utf-8" });
     var a = document.createElement("a");
@@ -282,21 +480,7 @@
     document.body.appendChild(a);
     a.click();
     setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
-    toast("Файл скачан. Теперь загрузите его на GitHub (Add file → Upload files).");
-  });
-
-  document.getElementById("btn-copy").addEventListener("click", function () {
-    var text = buildFile();
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(function () {
-        toast("Содержимое скопировано в буфер обмена.");
-      });
-    } else {
-      var ta = document.createElement("textarea");
-      ta.value = text; document.body.appendChild(ta); ta.select();
-      document.execCommand("copy"); ta.remove();
-      toast("Содержимое скопировано в буфер обмена.");
-    }
+    toast("Файл скачан. Загрузите его на GitHub (Add file → Upload files).");
   });
 
   renderAll();
