@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Панель администратора — Малый университет КФУ</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<style>
+  .admin-section { border: 1px solid var(--line); border-radius: var(--radius); padding: 26px 28px; margin-bottom: 28px; background: var(--paper); }
+  .admin-section h2 { margin-bottom: 6px; }
+  .admin-section > p { color: var(--muted); font-size: 14.5px; margin-bottom: 18px; }
+  .admin-row { border: 1px solid var(--wash); background: var(--wash); border-radius: 8px; padding: 16px 18px; margin-bottom: 14px; }
+  .admin-row__grid { display: grid; gap: 10px 14px; }
+  @media (min-width: 800px) { .admin-row__grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1100px) { .admin-row__grid { grid-template-columns: repeat(3, 1fr); } }
+  .admin-row label { display: block; font-size: 12.5px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+  .admin-row input { font: inherit; font-size: 14.5px; padding: 8px 10px; border: 1px solid #B9C4D2; border-radius: 6px; width: 100%; background: #fff; }
+  .admin-row__top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .admin-row__title { font-weight: 700; color: var(--navy); font-size: 14.5px; }
+  .btn-del { background: none; border: 1px solid #D0A0A0; color: #A03030; border-radius: 6px; font: inherit; font-size: 13px; padding: 4px 12px; cursor: pointer; }
+  .btn-del:hover { background: #FBEAEA; }
+  .btn-add { background: none; border: 1.5px dashed var(--blue); color: var(--blue); border-radius: 8px; font: inherit; font-weight: 700; font-size: 14.5px; padding: 10px 18px; cursor: pointer; }
+  .btn-add:hover { background: var(--wash-blue); }
+  .admin-actions { position: sticky; bottom: 0; background: var(--navy); padding: 18px 0; margin-top: 34px; }
+  .admin-actions .container { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .admin-actions p { color: #AFC1DA; font-size: 14px; margin: 0; flex: 1 1 100%; }
+  #admin-out { width: 100%; min-height: 140px; font-family: monospace; font-size: 13px; padding: 12px; border-radius: 8px; border: 1px solid var(--line); }
+  .admin-toast { position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%); background: #1B6E3C; color: #fff; padding: 12px 22px; border-radius: 999px; font-weight: 700; display: none; z-index: 400; }
+</style>
+</head>
+<body>
+
+<main id="main">
+<section class="page-head">
+  <div class="container container--offset">
+    <h1>Панель администратора</h1>
+    <p>Заполните поля формами — без редактирования кода. Затем нажмите «Скачать файл» внизу страницы и загрузите полученный файл на GitHub.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container container--offset">
+
+    <div class="note note--amber" style="margin-bottom:28px">
+      <strong>Как сохранить изменения на сайте:</strong>
+      1) заполните формы ниже → 2) нажмите «Скачать файл site-data.js» →
+      3) на GitHub откройте репозиторий → кнопка <b>Add file → Upload files</b> →
+      перетащите скачанный файл (он заменит старый) → <b>Commit changes</b>.
+      Через 1–2 минуты изменения появятся на сайте.
+    </div>
+
+    <div class="admin-section">
+      <h2>Ссылка на систему записи</h2>
+      <p>Куда ведут все кнопки «Записаться» на сайте. Пустое поле — вместо кнопок показывается пояснение.</p>
+      <div class="admin-row">
+        <div class="admin-row__grid">
+          <div><label for="enrollUrl">Адрес системы записи (https://…)</label>
+          <input id="enrollUrl" data-bind="enrollUrl" type="text" placeholder="https://"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-section">
+      <h2>Ссылки верхней панели</h2>
+      <p>Тёмная полоса в самом верху сайта (например, ссылка на главный сайт университета).</p>
+      <div id="list-topbar"></div>
+      <button class="btn-add" type="button" data-add="topbarLinks">+ Добавить ссылку</button>
+    </div>
+
+    <div class="admin-section">
+      <h2>Курсы 5–7 классов</h2>
+      <p>Таблица на странице «Курсы». Пустое поле покажется как «уточняется».</p>
+      <div id="list-courses-5-7"></div>
+      <button class="btn-add" type="button" data-add="course:5-7">+ Добавить курс</button>
+    </div>
+
+    <div class="admin-section">
+      <h2>Курсы 8–9 классов</h2>
+      <div id="list-courses-8-9"></div>
+      <button class="btn-add" type="button" data-add="course:8-9">+ Добавить курс</button>
+    </div>
+
+    <div class="admin-section">
+      <h2>Курсы 10–11 классов</h2>
+      <div id="list-courses-10-11"></div>
+      <button class="btn-add" type="button" data-add="course:10-11">+ Добавить курс</button>
+    </div>
+
+    <div class="admin-section">
+      <h2>Мероприятия</h2>
+      <p>Полная афиша на странице «Мероприятия»; первые три события видны также на главной.</p>
+      <div id="list-events"></div>
+      <button class="btn-add" type="button" data-add="events">+ Добавить мероприятие</button>
+    </div>
+
+    <div class="admin-section">
+      <h2>Олимпиады (блок на главной)</h2>
+      <div id="list-olympiads"></div>
+      <button class="btn-add" type="button" data-add="olympiads">+ Добавить олимпиаду</button>
+    </div>
+
+    <div class="admin-section">
+      <h2>Объявления и новости</h2>
+      <p>Блок «Объявления и новости» на главной странице.</p>
+      <div id="list-news"></div>
+      <button class="btn-add" type="button" data-add="news">+ Добавить объявление</button>
+    </div>
+
+  </div>
+</section>
+
+<div class="admin-actions">
+  <div class="container container--offset">
+    <button class="btn btn--amber" type="button" id="btn-download">Скачать файл site-data.js</button>
+    <button class="btn btn--ghost-light" type="button" id="btn-copy">Скопировать содержимое файла</button>
+    <p>Затем на GitHub: репозиторий → Add file → Upload files → перетащите скачанный файл → Commit changes.</p>
+  </div>
+</div>
+</main>
+
+<div class="admin-toast" id="toast" role="status"></div>
+
+<script src="data/site-data.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var DATA = window.SITE_DATA || {};
+  DATA.topbarLinks = DATA.topbarLinks || [];
+  DATA.courses = DATA.courses || {};
+  ["5-7", "8-9", "10-11"].forEach(function (g) { DATA.courses[g] = DATA.courses[g] || []; });
+  DATA.events = DATA.events || [];
+  DATA.olympiads = DATA.olympiads || [];
+  DATA.news = DATA.news || [];
+
+  var SCHEMAS = {
+    topbarLinks: [
+      ["title", "Название ссылки"], ["url", "Адрес (https://…)"]
+    ],
+    course: [
+      ["name", "Название курса"], ["grade", "Класс"], ["format", "Формат (очно/онлайн)"],
+      ["load", "Нагрузка"], ["dates", "Сроки"], ["price", "Стоимость"],
+      ["detailsUrl", "Ссылка «Подробнее» (можно пусто)"], ["enrollUrl", "Своя ссылка записи (можно пусто)"]
+    ],
+    events: [
+      ["date", "Дата"], ["title", "Название"], ["meta", "Место и аудитория"], ["url", "Ссылка на регистрацию (можно пусто)"]
+    ],
+    olympiads: [
+      ["title", "Название олимпиады"], ["text", "Классы, этапы, сроки"]
+    ],
+    news: [
+      ["date", "Дата"], ["title", "Заголовок"], ["text", "Текст объявления"], ["url", "Ссылка «Подробнее» (можно пусто)"]
+    ]
+  };
+
+  function q(v) { return JSON.stringify(v == null ? "" : String(v)); }
+
+  function rowEl(schema, item, onDelete) {
+    var row = document.createElement("div");
+    row.className = "admin-row";
+    var top = document.createElement("div");
+    top.className = "admin-row__top";
+    var t = document.createElement("span");
+    t.className = "admin-row__title";
+    t.textContent = item[schema[0][0]] || "Новая запись";
+    top.appendChild(t);
+    var del = document.createElement("button");
+    del.type = "button"; del.className = "btn-del"; del.textContent = "Удалить";
+    del.addEventListener("click", onDelete);
+    top.appendChild(del);
+    row.appendChild(top);
+
+    var grid = document.createElement("div");
+    grid.className = "admin-row__grid";
+    schema.forEach(function (f) {
+      var wrap = document.createElement("div");
+      var label = document.createElement("label");
+      label.textContent = f[1];
+      var input = document.createElement("input");
+      input.type = "text";
+      input.value = item[f[0]] || "";
+      input.addEventListener("input", function () {
+        item[f[0]] = input.value;
+        t.textContent = item[schema[0][0]] || "Новая запись";
+      });
+      wrap.appendChild(label); wrap.appendChild(input);
+      grid.appendChild(wrap);
+    });
+    row.appendChild(grid);
+    return row;
+  }
+
+  function renderList(boxId, schema, arr, addLabel) {
+    var box = document.getElementById(boxId);
+    box.innerHTML = "";
+    if (!arr.length) {
+      var p = document.createElement("p");
+      p.style.cssText = "color:var(--muted);font-size:14px;margin-bottom:14px";
+      p.textContent = "Пока пусто — на сайте отображается заглушка «раздел наполняется».";
+      box.appendChild(p);
+    }
+    arr.forEach(function (item, i) {
+      box.appendChild(rowEl(schema, item, function () {
+        arr.splice(i, 1);
+        renderList(boxId, schema, arr, addLabel);
+      }));
+    });
+  }
+
+  function renderAll() {
+    renderList("list-topbar", SCHEMAS.topbarLinks, DATA.topbarLinks);
+    renderList("list-courses-5-7", SCHEMAS.course, DATA.courses["5-7"]);
+    renderList("list-courses-8-9", SCHEMAS.course, DATA.courses["8-9"]);
+    renderList("list-courses-10-11", SCHEMAS.course, DATA.courses["10-11"]);
+    renderList("list-events", SCHEMAS.events, DATA.events);
+    renderList("list-olympiads", SCHEMAS.olympiads, DATA.olympiads);
+    renderList("list-news", SCHEMAS.news, DATA.news);
+  }
+
+  document.querySelectorAll("[data-add]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var kind = btn.getAttribute("data-add");
+      if (kind.indexOf("course:") === 0) {
+        DATA.courses[kind.slice(7)].push({});
+      } else {
+        DATA[kind].push({});
+      }
+      renderAll();
+    });
+  });
+
+  var enrollInput = document.getElementById("enrollUrl");
+  enrollInput.value = DATA.enrollUrl || "";
+  enrollInput.addEventListener("input", function () { DATA.enrollUrl = enrollInput.value; });
+
+  /* ---------- Генерация файла ---------- */
+  function clean(arr, fields) {
+    return arr.map(function (it) {
+      var o = {};
+      fields.forEach(function (f) { o[f] = it[f] || ""; });
+      return o;
+    });
+  }
+
+  function buildFile() {
+    var d = {
+      topbarLinks: clean(DATA.topbarLinks, ["title", "url"]),
+      enrollUrl: DATA.enrollUrl || "",
+      courses: {
+        "5-7": clean(DATA.courses["5-7"], ["name", "grade", "format", "load", "dates", "price", "detailsUrl", "enrollUrl"]),
+        "8-9": clean(DATA.courses["8-9"], ["name", "grade", "format", "load", "dates", "price", "detailsUrl", "enrollUrl"]),
+        "10-11": clean(DATA.courses["10-11"], ["name", "grade", "format", "load", "dates", "price", "detailsUrl", "enrollUrl"])
+      },
+      events: clean(DATA.events, ["date", "title", "meta", "url"]),
+      olympiads: clean(DATA.olympiads, ["title", "text"]),
+      news: clean(DATA.news, ["date", "title", "text", "url"])
+    };
+    var header =
+"/* ============================================================\n" +
+"   Малый университет КФУ — РЕДАКТИРУЕМЫЙ КОНТЕНТ САЙТА\n" +
+"   Файл сформирован панелью администратора (admin.html).\n" +
+"   Можно править и вручную: инструкция — в README.md.\n" +
+"   ============================================================ */\n\n";
+    return header + "window.SITE_DATA = " + JSON.stringify(d, null, 2) + ";\n";
+  }
+
+  function toast(msg) {
+    var t = document.getElementById("toast");
+    t.textContent = msg; t.style.display = "block";
+    setTimeout(function () { t.style.display = "none"; }, 2600);
+  }
+
+  document.getElementById("btn-download").addEventListener("click", function () {
+    var blob = new Blob([buildFile()], { type: "text/javascript;charset=utf-8" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "site-data.js";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    toast("Файл скачан. Теперь загрузите его на GitHub (Add file → Upload files).");
+  });
+
+  document.getElementById("btn-copy").addEventListener("click", function () {
+    var text = buildFile();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        toast("Содержимое скопировано в буфер обмена.");
+      });
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      document.execCommand("copy"); ta.remove();
+      toast("Содержимое скопировано в буфер обмена.");
+    }
+  });
+
+  renderAll();
+})();
+</script>
+</body>
+</html>
