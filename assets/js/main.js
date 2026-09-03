@@ -283,6 +283,20 @@
     });
   }
 
+  /* ---------- Интерактивная иллюстрация первого экрана ---------- */
+  var heroArt = document.querySelector(".hero__art");
+  if (heroArt && matchMedia("(pointer: fine)").matches && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    heroArt.closest(".hero").addEventListener("mousemove", function (e) {
+      var r = e.currentTarget.getBoundingClientRect();
+      var x = (e.clientX - r.left) / r.width - 0.5;
+      var y = (e.clientY - r.top) / r.height - 0.5;
+      heroArt.style.transform = "translate(" + (x * 18) + "px," + (y * 12) + "px)";
+    });
+    heroArt.closest(".hero").addEventListener("mouseleave", function () {
+      heroArt.style.transform = "";
+    });
+  }
+
   /* ---------- Cookie-баннер ---------- */
   var COOKIE_KEY = "mu_cookie_consent";
   var cookieBanner = document.querySelector(".cookie");
